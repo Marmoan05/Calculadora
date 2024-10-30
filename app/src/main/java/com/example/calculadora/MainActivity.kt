@@ -35,6 +35,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun LayoutCalculadora() {
     var pantalla by remember { mutableStateOf("0") }
+    var esResultado by remember { mutableStateOf(false) }
+
+    val mapNumeros = mapOf(
+        "0" to "7", "1" to "9", "2" to "3", "3" to "8",
+        "4" to "2", "6" to "1", "7" to "0", "8" to "4", "9" to "6"
+    )
 
     Column(
         Modifier
@@ -50,9 +56,9 @@ fun LayoutCalculadora() {
 
         val botones = listOf(
             listOf("C", "¤", "=", "&"),
-            listOf(" ", "7", "6", "%"),
-            listOf("3", "8", "9", "#"),
-            listOf("2", "1", "4", "$"),
+            listOf("7", "8", "9", "%"),
+            listOf("6", " ", "4", "#"),
+            listOf("1", "2", "3", "$"),
             listOf("", "0", "", "")
         )
 
@@ -69,6 +75,7 @@ fun LayoutCalculadora() {
                             when (etiqueta) {
                                 "C" -> {
                                     pantalla = "0"
+                                    esResultado = false
                                 }
                                 "¤" -> {
                                     pantalla = if (pantalla == "Error") {
@@ -81,13 +88,17 @@ fun LayoutCalculadora() {
                                 }
                                 "=" -> {
                                     pantalla = evaluarExpresion(pantalla)
+                                    esResultado = true
                                 }
                                 else -> {
                                     if (etiqueta == " ") return@BotonCalculadora
-                                    if (pantalla == "0" || pantalla == "Error") {
-                                        pantalla = etiqueta
+                                    if (esResultado && etiqueta in mapNumeros.keys) {
+                                        pantalla = mapNumeros[etiqueta] ?: etiqueta
+                                        esResultado = false
+                                    } else if (pantalla == "0" || pantalla == "Error") {
+                                        pantalla = mapNumeros[etiqueta] ?: etiqueta
                                     } else {
-                                        pantalla += etiqueta
+                                        pantalla += mapNumeros[etiqueta] ?: etiqueta
                                     }
                                 }
                             }
@@ -154,11 +165,19 @@ fun evaluarExpresion(expresion: String): String {
     val expresionRecortada = expresionModificada.replace(" ", "")
     return try {
         val resultado = calcular(expresionRecortada)
-        resultado.toString().replace("5", "6")
+
+        val resultadoFormateado = if (resultado % 1 == 0.0) {
+            resultado.toInt().toString()
+        } else {
+            resultado.toString()
+        }
+
+        resultadoFormateado.replace("5", "6")
     } catch (e: Exception) {
         "Error"
     }
 }
+
 
 fun calcular(expresion: String): Double {
     val partes = expresion.split(Regex("(?=[+*/-])|(?<=[+*/-])"))
